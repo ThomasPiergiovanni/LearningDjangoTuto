@@ -1,9 +1,10 @@
 from django.shortcuts import get_object_or_404, render
 
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.template import loader
+from django.urls import reverse
 
-from .models import Question
+from .models import Choice, Question
 
 # Create your views here.
 
@@ -41,8 +42,16 @@ def detail(request, question_id):
 
 
 def results(request, question_id):
-    response = "You're looking at the result of question %s."
-    return HttpResponse (response % question_id)
+    ### v1
+    # response = "You're looking at the result of question %s."
+    # return HttpResponse (response % question_id)
+
+    ### v2
+    question = get_object_or_404(Question, pk=question_id)
+    context = {
+        'question': question
+    }
+    return render(request, 'polls/results.html', context)
 
 
 def vote(request, question_id):
@@ -55,10 +64,11 @@ def vote(request, question_id):
         selected_choice = question.choice_set.get(pk=request.POST['choice'])
     except (KeyError, Choice.DoesNotExist):
         # Redisplay the question voting form.
-        return render(request, 'polls/detail.html', {
+        context = {
             'question': question,
             'error_message': "You didn't select a choice.",
-        })
+        }
+        return render(request, 'polls/detail.html', context)
     else:
         selected_choice.votes += 1
         selected_choice.save()
